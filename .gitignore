@@ -221,3 +221,10 @@ shopee-product-matching-mlops-template
 
 
 ./data/sample_submission.parquet
+
+
+./data/sample_submission.parquet
+
+checkpoints/
+artifacts/
+*.db

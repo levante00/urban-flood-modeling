@@ -1,4 +1,3 @@
-import subprocess
 from pathlib import Path
 
 import hydra
@@ -7,19 +6,10 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.loggers import MLFlowLogger
 
+from .callbacks import LocalMetricsPlotCallback
 from .modules import FloodDataModule
 from .modules.lightning_module import FloodLightningModule
-
-
-def _get_git_commit(project_root: Path) -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=project_root,
-            text=True,
-        ).strip()
-    except Exception:
-        return "unknown"
+from .utils.get_git_commit import get_git_commit
 
 
 def run_training(cfg: DictConfig) -> Path:
@@ -46,6 +36,16 @@ def run_training(cfg: DictConfig) -> Path:
     )
 
     mlflow_logger = None
+    callbacks: list[pl.Callback] = []
+
+    if bool(cfg.logging.save_local_artifacts):
+        callbacks.append(
+            LocalMetricsPlotCallback(
+                project_root=project_root,
+                local_plots_dir=str(cfg.logging.local_plots_dir),
+            )
+        )
+
     if bool(cfg.logging.enabled):
         mlflow_logger = MLFlowLogger(
             experiment_name=str(cfg.logging.experiment_name),
@@ -57,8 +57,10 @@ def run_training(cfg: DictConfig) -> Path:
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
         mlflow_logger.log_hyperparams(cfg_dict)
 
-        git_commit = _get_git_commit(project_root)
+        git_commit = get_git_commit(project_root)
         mlflow_logger.experiment.set_tag(mlflow_logger.run_id, "git_commit", git_commit)
+
+        mlflow_logger.experiment.set_tag(mlflow_logger.run_id, "stage", "train")
 
     accelerator = str(cfg.training.trainer.accelerator)
     if accelerator == "gpu" and not torch.cuda.is_available():
@@ -69,6 +71,7 @@ def run_training(cfg: DictConfig) -> Path:
         accelerator=accelerator,
         devices=cfg.training.trainer.devices,
         logger=mlflow_logger if mlflow_logger is not None else bool(cfg.training.trainer.logger),
+        callbacks=callbacks,
         enable_checkpointing=bool(cfg.training.trainer.enable_checkpointing),
     )
     trainer.fit(model, datamodule=datamodule)
@@ -76,6 +79,7 @@ def run_training(cfg: DictConfig) -> Path:
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     trainer.save_checkpoint(str(checkpoint_path))
     print(f"Training finished. Checkpoint saved to: {checkpoint_path}")
+
     return checkpoint_path
 
 

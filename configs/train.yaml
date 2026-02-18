@@ -6,7 +6,7 @@ defaults:
   - inference: default
   - postprocessing: default
   - dvc: default
-  - logging: default
+  - logging: train
   - _self_
 
 paths:

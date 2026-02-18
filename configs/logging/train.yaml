@@ -1,7 +1,7 @@
 enabled: true
 tracking_uri: http://127.0.0.1:8081
 experiment_name: urban-flood-modeling
-run_name: default_run
+run_name: train_run
 log_model: false
 save_local_artifacts: true
 local_plots_dir: plots/mlflow
