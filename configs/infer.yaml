@@ -13,6 +13,8 @@ paths:
   project_root: .
   data_dir: data
   checkpoint_path: artifacts/flood_model.ckpt
+  predictions_dir: artifacts
+  predictions_csv_name: predictions.csv
 
 hydra:
   run:

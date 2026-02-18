@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 from hydra import compose, initialize_config_dir
@@ -78,6 +79,18 @@ def run_infer(cfg: DictConfig):
         enable_checkpointing=bool(cfg.inference.trainer.enable_checkpointing),
     )
     batches = trainer.predict(model, datamodule=datamodule)
+
+    prediction_rows: list[dict[str, float | int]] = []
+    for batch in batches:
+        node_ids = batch["node_id"].detach().cpu().tolist()
+        predictions = batch["pred"].detach().cpu().tolist()
+        for node_id, prediction in zip(node_ids, predictions, strict=False):
+            prediction_rows.append({"node_id": int(node_id), "prediction": float(prediction)})
+
+    predictions_dir = (project_root / cfg.paths.predictions_dir).resolve()
+    predictions_dir.mkdir(parents=True, exist_ok=True)
+    predictions_path = predictions_dir / str(cfg.paths.predictions_csv_name)
+    pd.DataFrame(prediction_rows).to_csv(predictions_path, index=False)
 
     print(f"Prediction finished. Batches: {len(batches)}")
 
