@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def load_competition_data(data_dir: Path) -> dict[str, pd.DataFrame]:
+def load_data(data_dir: Path) -> dict[str, pd.DataFrame]:
     """Load all required CSV files for training and inference."""
     return {
         "train_1d": pd.read_csv(data_dir / "1d_nodes_dynamic_all.csv"),

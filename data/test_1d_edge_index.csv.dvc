@@ -1,0 +1,5 @@
+outs:
+- md5: cb1125801f87ad69fc43270e2d87e839
+  size: 141
+  hash: md5
+  path: test_1d_edge_index.csv

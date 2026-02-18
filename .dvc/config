@@ -1,0 +1,5 @@
+[core]
+    remote = s3remote
+['remote "s3remote"']
+    url = s3://mlopsflooddatabucket
+    allow_anonymous_login = true

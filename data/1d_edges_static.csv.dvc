@@ -1,0 +1,5 @@
+outs:
+- md5: 72b4dfe3b3b112ff83dd12cfbac8e45d
+  size: 1809
+  hash: md5
+  path: 1d_edges_static.csv

@@ -1,0 +1,5 @@
+outs:
+- md5: d9ea3c7139efda9f0687c50a619ddc61
+  size: 950
+  hash: md5
+  path: 1d_nodes_static.csv

@@ -1,0 +1,5 @@
+outs:
+- md5: ca50194b958f13d79b875f75b4ed19d9
+  size: 296437
+  hash: md5
+  path: test_2d_edges_static.csv

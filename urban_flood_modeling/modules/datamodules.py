@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from torch.utils.data import ConcatDataset, DataLoader
 
 from .dataset import FloodPredictDataset, FloodTrainDataset
-from .io import build_neighbors, load_competition_data
+from .io import build_neighbors, load_data
 from .preprocessing import preprocess_dynamic_df
 
 
@@ -37,7 +37,7 @@ class FloodDataModule(pl.LightningDataModule):
         if stage == "predict" and self._predict_ds is not None:
             return
 
-        data = load_competition_data(self.data_dir)
+        data = load_data(self.data_dir)
 
         self.neighbors = build_neighbors(data["edges_1d"], data["edges_2d"])
 
