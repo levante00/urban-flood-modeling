@@ -1,0 +1,20 @@
+defaults:
+  - data: default
+  - preprocessing: default
+  - model: default
+  - training: default
+  - inference: default
+  - postprocessing: default
+  - dvc: default
+  - logging: default
+  - _self_
+
+paths:
+  project_root: .
+  data_dir: data
+  checkpoint_path: artifacts/flood_model.ckpt
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null

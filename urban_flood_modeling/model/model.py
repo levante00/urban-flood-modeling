@@ -5,17 +5,23 @@ import torch.nn as nn
 class FloodModel(nn.Module):
     """LSTM-based sequence model with node-type embedding."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        node_embed_dim: int,
+        fc_hidden_sizes: tuple[int, int],
+    ) -> None:
         super().__init__()
 
-        self.lstm = nn.LSTM(input_size=5, hidden_size=64, batch_first=True)
-        self.node_embed = nn.Linear(1, 8)
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, batch_first=True)
+        self.node_embed = nn.Linear(1, node_embed_dim)
         self.fc = nn.Sequential(
-            nn.Linear(64 + 8, 64),
+            nn.Linear(hidden_size + node_embed_dim, fc_hidden_sizes[0]),
             nn.ReLU(),
-            nn.Linear(64, 32),
+            nn.Linear(fc_hidden_sizes[0], fc_hidden_sizes[1]),
             nn.ReLU(),
-            nn.Linear(32, 1),
+            nn.Linear(fc_hidden_sizes[1], 1),
         )
 
     def forward(self, x: torch.Tensor, node_type: torch.Tensor) -> torch.Tensor:

@@ -1,0 +1,4 @@
+input_size: 5
+hidden_size: 64
+node_embed_dim: 8
+fc_hidden_sizes: [64, 32]

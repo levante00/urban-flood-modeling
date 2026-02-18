@@ -1,0 +1,5 @@
+enabled: true
+tracking_uri: http://127.0.0.1:8081
+experiment_name: urban-flood-modeling-2
+run_name: train-run
+log_model: false

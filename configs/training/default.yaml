@@ -1,0 +1,7 @@
+epochs: 5
+learning_rate: 0.001
+trainer:
+  accelerator: cpu
+  devices: 1
+  logger: false
+  enable_checkpointing: false

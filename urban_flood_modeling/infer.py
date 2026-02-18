@@ -1,31 +1,41 @@
+from pathlib import Path
+
+import hydra
 import pytorch_lightning as pl
 import torch
+from omegaconf import DictConfig
 
-from .config import Settings
 from .modules import FloodDataModule
 from .modules.lightning_module import FloodLightningModule
 
 
-def run_predict(settings: Settings, pred_node_type: int):
-    datamodule = FloodDataModule(
-        project_root=settings.project_root,
-        data_dir=settings.data_dir,
-        seq_len=settings.seq_len,
-        batch_size=settings.batch_size,
-        num_workers=settings.num_workers,
-        pred_node_type=pred_node_type,
-    )
-    model = FloodLightningModule.load_from_checkpoint(
-        settings.checkpoint_path, learning_rate=settings.learning_rate
-    )
+def run_infer(cfg: DictConfig):
+    project_root = Path(cfg.paths.project_root).resolve()
+    data_dir = (project_root / cfg.paths.data_dir).resolve()
+    checkpoint_path = (project_root / cfg.paths.checkpoint_path).resolve()
 
-    accelerator = "gpu" if settings.device == "cuda" and torch.cuda.is_available() else "cpu"
+    datamodule = FloodDataModule(
+        project_root=project_root,
+        data_dir=data_dir,
+        seq_len=int(cfg.data.seq_len),
+        batch_size=int(cfg.data.batch_size),
+        num_workers=int(cfg.data.num_workers),
+        pred_node_type=int(cfg.inference.pred_node_type),
+        preprocess_fillna_value=float(cfg.preprocessing.fillna_value),
+        preprocess_sort_columns=tuple(cfg.preprocessing.sort_columns),
+        dvc_pull_targets=tuple(cfg.dvc.pull_targets),
+    )
+    model = FloodLightningModule.load_from_checkpoint(str(checkpoint_path))
+
+    accelerator = str(cfg.inference.trainer.accelerator)
+    if accelerator == "gpu" and not torch.cuda.is_available():
+        accelerator = "cpu"
+
     trainer = pl.Trainer(
-        max_epochs=settings.epochs,
         accelerator=accelerator,
-        devices=1,
-        logger=False,
-        enable_checkpointing=False,
+        devices=cfg.inference.trainer.devices,
+        logger=bool(cfg.inference.trainer.logger),
+        enable_checkpointing=bool(cfg.inference.trainer.enable_checkpointing),
     )
     batches = trainer.predict(model, datamodule=datamodule)
 
@@ -40,9 +50,9 @@ def run_predict(settings: Settings, pred_node_type: int):
     return out
 
 
-def main() -> None:
-    settings = Settings()
-    run_predict(settings, pred_node_type=1)
+@hydra.main(version_base=None, config_path="../configs", config_name="infer")
+def main(cfg: DictConfig) -> None:
+    run_infer(cfg)
 
 
 if __name__ == "__main__":

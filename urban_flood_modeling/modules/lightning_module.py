@@ -8,11 +8,25 @@ from ..model.model import FloodModel
 class FloodLightningModule(pl.LightningModule):
     """LightningModule wrapper for training FloodModel."""
 
-    def __init__(self, learning_rate: float) -> None:
+    def __init__(
+        self,
+        learning_rate: float,
+        model_cfg: dict[str, int | list[int]],
+        postprocess_cfg: dict[str, float],
+    ) -> None:
         super().__init__()
         self.save_hyperparameters()
-        self.model = FloodModel()
+
+        fc_hidden_sizes = tuple(int(v) for v in model_cfg["fc_hidden_sizes"])
+        self.model = FloodModel(
+            input_size=int(model_cfg["input_size"]),
+            hidden_size=int(model_cfg["hidden_size"]),
+            node_embed_dim=int(model_cfg["node_embed_dim"]),
+            fc_hidden_sizes=(fc_hidden_sizes[0], fc_hidden_sizes[1]),
+        )
         self.loss_fn = nn.MSELoss()
+        self.smoothing_alpha = float(postprocess_cfg["smoothing_alpha"])
+        self.smoothing_beta = float(postprocess_cfg["smoothing_beta"])
 
     def forward(self, x: torch.Tensor, node_type: torch.Tensor) -> torch.Tensor:
         return self.model(x, node_type)
@@ -25,7 +39,12 @@ class FloodLightningModule(pl.LightningModule):
         x, y, t = batch
         pred = self.model(x, t)
         loss = self.loss_fn(pred, y)
+        rmse = torch.sqrt(loss)
+        mae = torch.mean(torch.abs(pred - y))
+
         self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("train_rmse", rmse, prog_bar=False, on_step=False, on_epoch=True)
+        self.log("train_mae", mae, prog_bar=False, on_step=False, on_epoch=True)
 
         return loss
 
@@ -35,7 +54,7 @@ class FloodLightningModule(pl.LightningModule):
 
         last_val = x[:, -1, 0]
         pred = last_val + residual
-        pred = 0.8 * pred + 0.2 * last_val
+        pred = self.smoothing_alpha * pred + self.smoothing_beta * last_val
 
         pred = torch.where(torch.isfinite(pred), pred, last_val)
 

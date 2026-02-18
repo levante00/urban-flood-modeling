@@ -1,0 +1,6 @@
+pred_node_type: 1
+trainer:
+  accelerator: cpu
+  devices: 1
+  logger: false
+  enable_checkpointing: false

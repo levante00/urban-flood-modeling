@@ -1,9 +1,11 @@
-from urban_flood_modeling import Settings, run_training
+from urban_flood_modeling.infer import main as infer_main
+
+from urban_flood_modeling.train import main as train_main
 
 
 def main() -> None:
-    settings = Settings()
-    run_training(settings)
+    train_main()
+#    infer_main()
 
 
 if __name__ == "__main__":
