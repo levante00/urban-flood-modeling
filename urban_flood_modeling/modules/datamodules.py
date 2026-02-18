@@ -1,0 +1,91 @@
+from pathlib import Path
+
+import pytorch_lightning as pl
+from torch.utils.data import ConcatDataset, DataLoader
+
+from .dataset import FloodPredictDataset, FloodTrainDataset
+from .io import build_neighbors, load_competition_data
+from .preprocessing import preprocess_dynamic_df
+
+
+class FloodDataModule(pl.LightningDataModule):
+    """Lightning DataModule for flood training data."""
+
+    def __init__(
+        self,
+        data_dir: Path,
+        seq_len: int,
+        batch_size: int,
+        pred_node_type: int = 1,
+        num_workers: int = 0,
+    ) -> None:
+        super().__init__()
+        self.data_dir = data_dir
+        self.seq_len = seq_len
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+        self.neighbors: dict[int, list[int]] | None = None
+        self.pred_node_type = pred_node_type
+
+        self._predict_ds: FloodPredictDataset | None = None
+        self._train_ds: ConcatDataset | None = None
+
+    def setup(self, stage: str | None = None) -> None:
+        if stage == "fit" and self._train_ds is not None:
+            return
+        if stage == "predict" and self._predict_ds is not None:
+            return
+
+        data = load_competition_data(self.data_dir)
+
+        self.neighbors = build_neighbors(data["edges_1d"], data["edges_2d"])
+
+        if stage == "fit":
+            train_1d = preprocess_dynamic_df(data["train_1d"])
+            train_2d = preprocess_dynamic_df(data["train_2d"])
+            ds1 = FloodTrainDataset(
+                train_1d,
+                node_type=1,
+                neighbors=self.neighbors,
+                seq_len=self.seq_len,
+            )
+            ds2 = FloodTrainDataset(
+                train_2d,
+                node_type=2,
+                neighbors=self.neighbors,
+                seq_len=self.seq_len,
+            )
+            self._train_ds = ConcatDataset([ds1, ds2])
+        elif stage == "predict":
+            pred_data = data["test_1d"] if self.pred_node_type == 1 else data["test_2d"]
+            predict = preprocess_dynamic_df(pred_data)
+
+            self._predict_ds = FloodPredictDataset(
+                predict,
+                node_type=self.pred_node_type,
+                neighbors=self.neighbors,
+                seq_len=self.seq_len,
+            )
+
+    def train_dataloader(self) -> DataLoader:
+        if self._train_ds is None:
+            self.setup(stage="fit")
+
+        return DataLoader(
+            self._train_ds,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+        )
+
+    def predict_dataloader(self) -> DataLoader:
+        if self._predict_ds is None:
+            self.setup(stage="predict")
+
+        return DataLoader(
+            self._predict_ds,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )
