@@ -11,6 +11,7 @@ from .modules.lightning_module import FloodLightningModule
 def run_training(settings: Settings) -> Path:
     """Train model and save Lightning checkpoint."""
     datamodule = FloodDataModule(
+        project_root=settings.project_root,
         data_dir=settings.data_dir,
         seq_len=settings.seq_len,
         batch_size=settings.batch_size,

@@ -6,6 +6,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from .dataset import FloodPredictDataset, FloodTrainDataset
 from .io import build_neighbors, load_data
 from .preprocessing import preprocess_dynamic_df
+from dvc.repo import Repo
 
 
 class FloodDataModule(pl.LightningDataModule):
@@ -13,6 +14,7 @@ class FloodDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
+        project_root: Path,
         data_dir: Path,
         seq_len: int,
         batch_size: int,
@@ -20,6 +22,7 @@ class FloodDataModule(pl.LightningDataModule):
         num_workers: int = 0,
     ) -> None:
         super().__init__()
+        self.project_root = project_root
         self.data_dir = data_dir
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -30,6 +33,17 @@ class FloodDataModule(pl.LightningDataModule):
 
         self._predict_ds: FloodPredictDataset | None = None
         self._train_ds: ConcatDataset | None = None
+
+    def prepare_data(self) -> None:
+        """Ensure data files are available locally via DVC before setup."""
+
+        dvc_root = self.project_root.resolve()
+        if not (dvc_root / ".dvc").is_dir():
+            msg = f"Provided project_root is not a DVC repository: {dvc_root}"
+            raise RuntimeError(msg)
+
+        with Repo(str(dvc_root)) as repo:
+            repo.pull()
 
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" and self._train_ds is not None:
