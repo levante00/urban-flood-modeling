@@ -4,9 +4,9 @@ import pytorch_lightning as pl
 from dvc.repo import Repo
 from torch.utils.data import ConcatDataset, DataLoader
 
+from ..utils.io import build_neighbors, load_data
+from ..utils.preprocessing import preprocess_dynamic_df
 from .dataset import FloodPredictDataset, FloodTrainDataset
-from .io import build_neighbors, load_data
-from .preprocessing import preprocess_dynamic_df
 
 
 class FloodDataModule(pl.LightningDataModule):
@@ -23,6 +23,7 @@ class FloodDataModule(pl.LightningDataModule):
         preprocess_sort_columns: tuple[str, str],
         dvc_pull_targets: tuple[str, ...],
         num_workers: int,
+        data_files: dict[str, str],
     ) -> None:
         super().__init__()
         self.project_root = project_root
@@ -33,6 +34,7 @@ class FloodDataModule(pl.LightningDataModule):
         self.preprocess_fillna_value = preprocess_fillna_value
         self.preprocess_sort_columns = preprocess_sort_columns
         self.dvc_pull_targets = dvc_pull_targets
+        self.data_files = data_files
 
         self.neighbors: dict[int, list[int]] | None = None
         self.pred_node_type = pred_node_type
@@ -57,7 +59,7 @@ class FloodDataModule(pl.LightningDataModule):
         if stage == "predict" and self._predict_ds is not None:
             return
 
-        data = load_data(self.data_dir)
+        data = load_data(self.data_dir, self.data_files)
 
         self.neighbors = build_neighbors(data["edges_1d"], data["edges_2d"])
 

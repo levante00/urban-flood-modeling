@@ -11,15 +11,16 @@ def preprocess_dynamic_df(
 
     rename_map: dict[str, str] = {}
     for col in out.columns:
-        c = col.lower()
-        if "node" in c and "idx" in c:
+        col_lower = col.lower()
+        if "node" in col_lower and "idx" in col_lower:
             rename_map[col] = "node_id"
-        elif "time" in c:
+        elif "time" in col_lower:
             rename_map[col] = "timestep"
-        elif "water" in c and "level" in c:
+        elif "water" in col_lower and "level" in col_lower:
             rename_map[col] = "water_level"
-        elif "rain" in c:
+        elif "rain" in col_lower:
             rename_map[col] = "rainfall"
 
     out = out.rename(columns=rename_map)
+
     return out.sort_values(list(sort_columns)).reset_index(drop=True)

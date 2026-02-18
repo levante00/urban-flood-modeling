@@ -1,3 +1,10 @@
 seq_len: 10
 batch_size: 256
 num_workers: 0
+files:
+  train_1d: 1d_nodes_dynamic_all.csv
+  train_2d: 2d_nodes_dynamic_all.csv
+  test_1d: test_1d_nodes_dynamic_all.csv
+  test_2d: test_2d_nodes_dynamic_all.csv
+  edges_1d: 1d_edge_index.csv
+  edges_2d: 2d_edge_index.csv

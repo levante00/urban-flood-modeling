@@ -33,24 +33,26 @@ class FloodTrainDataset(Dataset):
             )
             neigh_ids = neighbors.get(node_id_int, [])
 
-            for i in range(len(group) - seq_len):
-                seq = vals[i : i + seq_len]
-                rain_seq = rain[i : i + seq_len]
+            for index in range(len(group) - seq_len):
+                seq = vals[index : index + seq_len]
+                rain_seq = rain[index : index + seq_len]
 
                 mean = seq.mean()
                 std = seq.std() if seq.std() > 0 else 1.0
 
                 neigh_vals: list[float] = []
-                for t in range(seq_len):
-                    idx = i + t
+                for node_type_id in range(seq_len):
+                    idx = index + node_type_id
                     vals_list = [
                         node_series[nb][idx]
                         for nb in neigh_ids
                         if nb in node_series and idx < len(node_series[nb])
                     ]
-                    neigh_vals.append(float(np.mean(vals_list)) if vals_list else float(seq[t]))
+                    neigh_vals.append(
+                        float(np.mean(vals_list)) if vals_list else float(seq[node_type_id])
+                    )
 
-                x = np.stack(
+                input_features = np.stack(
                     [
                         seq,
                         rain_seq,
@@ -60,19 +62,19 @@ class FloodTrainDataset(Dataset):
                     ],
                     axis=1,
                 ).astype(np.float32)
-                y = np.float32(vals[i + seq_len])
+                target = np.float32(vals[index + seq_len])
 
-                self.samples.append((x, y, np.float32(node_type)))
+                self.samples.append((input_features, target, np.float32(node_type)))
 
     def __len__(self) -> int:
         return len(self.samples)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        x, y, t = self.samples[idx]
+        input_features, target, node_type_id = self.samples[idx]
         return (
-            torch.tensor(x, dtype=torch.float32),
-            torch.tensor(y, dtype=torch.float32),
-            torch.tensor(t, dtype=torch.float32),
+            torch.tensor(input_features, dtype=torch.float32),
+            torch.tensor(target, dtype=torch.float32),
+            torch.tensor(node_type_id, dtype=torch.float32),
         )
 
 
@@ -122,14 +124,14 @@ class FloodPredictDataset(Dataset):
 
         neigh_ids = self.neighbors.get(nid, [])
         neigh_vals = []
-        for t in range(self.seq_len):
+        for node_type_id in range(self.seq_len):
             vals_list = []
             for nb in neigh_ids:
-                if nb in self.node_series and t < len(self.node_series[nb]):
-                    vals_list.append(self.node_series[nb][-self.seq_len + t])
-            neigh_vals.append(np.mean(vals_list) if len(vals_list) > 0 else vals[t])
+                if nb in self.node_series and node_type_id < len(self.node_series[nb]):
+                    vals_list.append(self.node_series[nb][-self.seq_len + node_type_id])
+            neigh_vals.append(np.mean(vals_list) if len(vals_list) > 0 else vals[node_type_id])
 
-        x = np.stack(
+        input_features = np.stack(
             [
                 vals,
                 rain,
@@ -141,7 +143,7 @@ class FloodPredictDataset(Dataset):
         ).astype(np.float32)
 
         return (
-            torch.tensor(x, dtype=torch.float32),
+            torch.tensor(input_features, dtype=torch.float32),
             torch.tensor(self.node_type, dtype=torch.float32),
             torch.tensor(nid, dtype=torch.long),
         )

@@ -1,6 +1,6 @@
 """Data loading, datasets, and datamodules."""
 
-from .io import build_neighbors, load_data
+from ..utils.io import build_neighbors, load_data
 from .datamodules import FloodDataModule
 from .dataset import FloodTrainDataset
 

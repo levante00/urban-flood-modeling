@@ -1,8 +1,10 @@
+import sys
 from pathlib import Path
 
-import hydra
 import pytorch_lightning as pl
 import torch
+from hydra import compose, initialize_config_dir
+from hydra.core.global_hydra import GlobalHydra
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.loggers import MLFlowLogger
 
@@ -28,6 +30,7 @@ def run_training(cfg: DictConfig) -> Path:
         preprocess_sort_columns=tuple(cfg.preprocessing.sort_columns),
         dvc_pull_targets=tuple(cfg.dvc.pull_targets),
         num_workers=int(cfg.data.num_workers),
+        data_files={k: str(v) for k, v in cfg.data.files.items()},
     )
     model = FloodLightningModule(
         learning_rate=float(cfg.training.learning_rate),
@@ -83,10 +86,20 @@ def run_training(cfg: DictConfig) -> Path:
     return checkpoint_path
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="train")
-def main(cfg: DictConfig) -> None:
+def compose_train_config(overrides: list[str] | None = None) -> DictConfig:
+    config_dir = (Path(__file__).resolve().parents[1] / "configs").resolve()
+
+    if GlobalHydra.instance().is_initialized():
+        GlobalHydra.instance().clear()
+
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir), job_name="train"):
+        return compose(config_name="train", overrides=overrides or [])
+
+
+def main(overrides: list[str] | None = None) -> None:
+    cfg = compose_train_config(overrides=overrides)
     run_training(cfg)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

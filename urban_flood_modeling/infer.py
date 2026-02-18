@@ -1,8 +1,10 @@
+import sys
 from pathlib import Path
 
-import hydra
 import pytorch_lightning as pl
 import torch
+from hydra import compose, initialize_config_dir
+from hydra.core.global_hydra import GlobalHydra
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.loggers import MLFlowLogger
 
@@ -27,6 +29,7 @@ def run_infer(cfg: DictConfig):
         preprocess_fillna_value=float(cfg.preprocessing.fillna_value),
         preprocess_sort_columns=tuple(cfg.preprocessing.sort_columns),
         dvc_pull_targets=tuple(cfg.dvc.pull_targets),
+        data_files={k: str(v) for k, v in cfg.data.files.items()},
     )
     model = FloodLightningModule.load_from_checkpoint(str(checkpoint_path))
 
@@ -79,10 +82,20 @@ def run_infer(cfg: DictConfig):
     print(f"Prediction finished. Batches: {len(batches)}")
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="infer")
-def main(cfg: DictConfig) -> None:
+def compose_infer_config(overrides: list[str] | None = None) -> DictConfig:
+    config_dir = (Path(__file__).resolve().parents[1] / "configs").resolve()
+
+    if GlobalHydra.instance().is_initialized():
+        GlobalHydra.instance().clear()
+
+    with initialize_config_dir(version_base=None, config_dir=str(config_dir), job_name="infer"):
+        return compose(config_name="infer", overrides=overrides or [])
+
+
+def main(overrides: list[str] | None = None) -> None:
+    cfg = compose_infer_config(overrides=overrides)
     run_infer(cfg)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

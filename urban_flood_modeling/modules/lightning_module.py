@@ -28,19 +28,19 @@ class FloodLightningModule(pl.LightningModule):
         self.smoothing_alpha = float(postprocess_cfg["smoothing_alpha"])
         self.smoothing_beta = float(postprocess_cfg["smoothing_beta"])
 
-    def forward(self, x: torch.Tensor, node_type: torch.Tensor) -> torch.Tensor:
-        return self.model(x, node_type)
+    def forward(self, input_features: torch.Tensor, node_type: torch.Tensor) -> torch.Tensor:
+        return self.model(input_features, node_type)
 
     def training_step(
         self,
         batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
         batch_idx: int,
     ) -> torch.Tensor:
-        x, y, t = batch
-        pred = self.model(x, t)
-        loss = self.loss_fn(pred, y)
+        input_features, target, node_type = batch
+        pred = self.model(input_features, node_type)
+        loss = self.loss_fn(pred, target)
         rmse = torch.sqrt(loss)
-        mae = torch.mean(torch.abs(pred - y))
+        mae = torch.mean(torch.abs(pred - target))
 
         self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
         self.log("train_rmse", rmse, prog_bar=False, on_step=False, on_epoch=True)
@@ -49,10 +49,10 @@ class FloodLightningModule(pl.LightningModule):
         return loss
 
     def predict_step(self, batch, batch_idx):
-        x, t, node_id = batch
-        residual = self.model(x, t).view(-1)
+        input_features, node_type, node_id = batch
+        residual = self.model(input_features, node_type).view(-1)
 
-        last_val = x[:, -1, 0]
+        last_val = input_features[:, -1, 0]
         pred = last_val + residual
         pred = self.smoothing_alpha * pred + self.smoothing_beta * last_val
 
