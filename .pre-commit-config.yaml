@@ -15,9 +15,9 @@ repos:
     rev: v0.15.1
     hooks:
       - id: ruff-check
-        types_or: [python, pyi] # temp
+        types_or: [python, pyi]
       - id: ruff-format
-        types_or: [python, pyi] # temp
+        types_or: [python, pyi]
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.8.1

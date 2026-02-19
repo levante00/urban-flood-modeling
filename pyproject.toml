@@ -9,14 +9,12 @@ authors = [{ name = "Levon Asatryan", email = "asatryan.levon@gmail.com" }]
 dependencies = [
   "numpy>=2.4.1",
   "pandas>=2.3.3",
-  "scikit-learn>=1.8.0",
   "torch>=2.9.1",
   "pytorch-lightning>=2.6.0",
   "dvc[s3]>=3.65.0",
   "omegaconf>=2.3.0",
   "mlflow>=3.8.0",
   "matplotlib>=3.10.8",
-  "rich>=14.2.0",
 ]
 
 [dependency-groups]
@@ -85,10 +83,6 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
-
-
-# [project.scripts]
-# urban_flood_modeling = "urban_flood_modeling.commands:main"
 
 [build-system]
 requires = ["hatchling>=1.28.0"]
