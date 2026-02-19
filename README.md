@@ -122,6 +122,31 @@ Hydra, обучение/инференс через PyTorch Lightning, трек�
 
 ## 2) Техническая инструкция
 
+## Быстрый старт (TL;DR)
+
+```bash
+git clone git@github.com:levante00/urban-flood-modeling.git
+cd urban-flood-modeling
+
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv venv
+source .venv/bin/activate
+uv sync
+
+uv run pre-commit install
+uv run pre-commit run --all-files
+
+uv run dvc pull
+
+uv run mlflow server \
+  --host 127.0.0.1 \
+  --port 8081
+
+uv run python main.py train
+uv run python main.py infer
+```
+
 ## Setup
 
 ### 2.1 Требования
@@ -140,15 +165,15 @@ cd urban-flood-modeling
 
 ### 2.3 Установка окружения
 
-В корне проекта:
+Сначала установите глобально менеджеер окружения и пакетов uv, далее в корне проекта:
 
 ```bash
-pip install uv
 uv venv
-uv sync --dev
 source .venv/bin/activate
+uv sync
 uv run pre-commit install
 uv run pre-commit run --all-files
+uv run dvc pull
 ```
 
 Зависимости и их версии фиксируются в:
@@ -285,15 +310,3 @@ uv run python main.py infer logging.enabled=false
     `paths.predictions_csv_name`)
 - локально: агрегированные метрики предсказаний
   - `plots/mlflow/infer/<run_id>/final_metrics.csv`
-
----
-
-## Быстрый старт (TL;DR)
-
-```bash
-uv sync --dev
-source .venv/bin/activate
-uv run dvc pull
-uv run python main.py train
-uv run python main.py infer
-```

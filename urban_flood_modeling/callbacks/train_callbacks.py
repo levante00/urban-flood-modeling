@@ -19,7 +19,7 @@ class LocalMetricsPlotCallback(pl.Callback):
         self,
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
-    ) -> None:  # workround to avoid unused argument warnings
+    ) -> None:  # workaround to avoid unused argument warnings
         del pl_module
         metrics = trainer.callback_metrics
         row: dict[str, float] = {"epoch": float(trainer.current_epoch)}
@@ -40,7 +40,7 @@ class LocalMetricsPlotCallback(pl.Callback):
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
     ) -> None:
-        del pl_module  # workround to avoid unused argument warnings
+        del pl_module  # workaround to avoid unused argument warnings
         if not self.history:
             return
 

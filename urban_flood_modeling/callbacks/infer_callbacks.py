@@ -29,7 +29,7 @@ class LocalInferenceMetricsCallback(pl.Callback):
             batch,
             batch_idx,
             dataloader_idx,
-        )  # workround to avoid unused argument warnings
+        )  # workaround to avoid unused argument warnings
         if outputs is None:
             return
 
@@ -41,7 +41,7 @@ class LocalInferenceMetricsCallback(pl.Callback):
         self.pred_values.extend(float(v) for v in pred_batch)
 
     def on_predict_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
-        del pl_module  # workround to avoid unused argument warnings
+        del pl_module  # workaround to avoid unused argument warnings
         if not trainer.is_global_zero:
             return
         if not self.pred_values:
