@@ -1,4 +1,4 @@
-epochs: 5
+epochs: 15
 learning_rate: 0.001
 trainer:
   accelerator: cpu
